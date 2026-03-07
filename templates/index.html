@@ -8,24 +8,50 @@
     <script src="static/js/script.js"></script>
 </header>
 <body>
+<div id="interactions-container">
+        <div id="dropdown-container">
+            <label for="grouper"> X: </label>
+            <!-- DONE: update the bar chart when the grouper is changed -->
+            <select name="grouper" onchange="update_aggregate(this.value, 'grouper')">
+                {% for group in groups %}
+                    <option value="{{group}}">{{ group }}</option>
+                {% endfor %}
+            </select>
+            <label for="value"> Y: </label>
+            <!-- DONE: update the bar chart when the value is changed -->
+            <select name="value" onchange="update_aggregate(this.value, 'value')">
+                {% for value in values %}
+                    <option value="{{value}}">{{ value }}</option>
+                {% endfor %}
+            </select>
+            <label for="agg"> Facet: </label>
+            <!-- DONE: update the bar chart when the aggregate function is changed -->
+            <select name="agg" onchange="update_aggregate(this.value, 'agg')">
+                {% for agg in aggs %}
+                    <option value="{{agg}}">{{ agg }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
   <div class = "container">
-    <div style="float: left">
-      <div>
-        <h1>Forest Fires</h1>
-        <div id="scatter"></div>
-      </div>
-      <div><h1>Number of Forest Fires by Month</h1><div id="bar"></div></div>
+    <div style="display: inline-block; vertical-align: top">
+        <h1>Placement Status: Placed</h1>
+        <div id="scatter_placed"></div>
     </div>
 
-    <div style="float: left; margin-left: 50px;">
-      
+    <div style="display: inline-block; vertical-align: top">
+        <h1>Placement Status: Not Placed</h1>
+        <div id="scatter_notplaced"></div>
+    </div>
 
-      <h3>Internships</h3><div id="internships-slider" style="width:400pt; display: inline-block"></div>
-      <h3>Projects</h3><div id="projects-slider" style="width:400pt; display: inline-block"></div>
-      <h3>Aptitude Test Score</h3><div id="aptitude-slider" style="width:400pt; display: inline-block"></div>
-      <h3>Soft Skills Rating</h3><div id="soft-slider" style="width:400pt; display: inline-block"></div>
-      <h3>SSC_Marks</h3><div id="ssc-marks-slider" style="width:400pt; display: inline-block"></div>
-      <h3>HSC_Marks</h3><div id="hsc-marks-slider" style="width:400pt; display: inline-block"></div>
+    <div style="display: inline-block; vertical-align: top; margin-left: 10px;">
+      
+      <h3>Internships</h3><div id="internships-slider" style="width:300pt; display: inline-block"></div>
+      <h3>Projects</h3><div id="projects-slider" style="width:300pt; display: inline-block"></div>
+      <h3>Aptitude Test Score</h3><div id="aptitude-slider" style="width:300pt; display: inline-block"></div>
+      <h3>Soft Skills Rating</h3><div id="soft-slider" style="width:300pt; display: inline-block"></div>
+      <h3>SSC_Marks</h3><div id="ssc-marks-slider" style="width:300pt; display: inline-block"></div>
+      <h3>HSC_Marks</h3><div id="hsc-marks-slider" style="width:300pt; display: inline-block"></div>
     
       <div id="barchart">
       <div id="barChartButton">
@@ -75,24 +101,23 @@
 
 <script>
   margin = {top: 45, right: 30, bottom: 30, left: 45},
-  width = 460 - margin.left - margin.right,
-  height = 360 - margin.top - margin.bottom;
+  // width = 460 - margin.left - margin.right,
+  // height = 360 - margin.top - margin.bottom;
+  width = 400 - margin.left - margin.right,
+  height = 300 - margin.top - margin.bottom;
 
-  scatter_svg = draw_svg('scatter', margin, width, height)
-  scatter_scale = draw_axes('scatter', scatter_svg, width, height, {{scatter_ranges[:2]}}, {{scatter_ranges[2:]}}, false)
+  scatter_placed_svg = draw_svg('scatter_placed', margin, width, height)
+  scatter_placed_scale = draw_axes('scatter_placed', scatter_placed_svg, width, height, {{scatter_ranges[:2]}}, {{scatter_ranges[2:]}}, false)
 
-  bar_svg = draw_svg('bar', margin, width, height)
-  bar_scale = draw_axes('bar', bar_svg, width, height, {{months|safe}}, [0, {{max_count}}], true)
+  scatter_notplaced_svg = draw_svg('scatter_notplaced', margin, width, height)
+  scatter_notplaced_scale = draw_axes('scatter_notplaced', scatter_notplaced_svg, width, height, {{scatter_ranges[:2]}}, {{scatter_ranges[2:]}}, false)
 
   {% for column, (min,max) in filter_ranges.items() %}
-    draw_slider('{{column}}', {{min}}, {{max}}, scatter_svg, bar_svg, scatter_scale, bar_scale)
+    draw_slider('{{column}}', {{min}}, {{max}}, scatter_placed_svg, scatter_notplaced_svg, scatter_placed_scale, scatter_notplaced_scale)
   {% endfor %}
 
-  update(scatter_svg, bar_svg, scatter_scale, bar_scale)
-  function update_checked(checkbox){
-    checkbox.classList.toggle('day-selected')
-    update(scatter_svg, bar_svg, scatter_scale, bar_scale)
-  }
+  update(scatter_placed_svg, scatter_notplaced_svg, scatter_placed_scale, scatter_notplaced_scale)
+  console.log("updated")
 
 </script>
 </html>
