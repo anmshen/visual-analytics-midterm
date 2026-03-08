@@ -8,27 +8,25 @@
     <script src="static/js/script.js"></script>
 </header>
 <body>
+  <!-- TODO: IMPLEMENT DROPDOWN MENU -->
 <div id="interactions-container">
         <div id="dropdown-container">
-            <label for="grouper"> X: </label>
-            <!-- DONE: update the bar chart when the grouper is changed -->
-            <select name="grouper" onchange="update_aggregate(this.value, 'grouper')">
-                {% for group in groups %}
+            <label for="x_val"> X: </label>
+            <select name="x_val" id="xdropdown" onchange="update_facet(this.value, 'x_val')">
+                {% for group in x_vals %}
                     <option value="{{group}}">{{ group }}</option>
                 {% endfor %}
             </select>
-            <label for="value"> Y: </label>
-            <!-- DONE: update the bar chart when the value is changed -->
-            <select name="value" onchange="update_aggregate(this.value, 'value')">
-                {% for value in values %}
+            <label for="y_val"> Y: </label>
+            <select name="y_val" id = "ydropdown" onchange="update_facet(this.value, 'y_val')">
+                {% for value in y_vals %}
                     <option value="{{value}}">{{ value }}</option>
                 {% endfor %}
             </select>
-            <label for="agg"> Facet: </label>
-            <!-- DONE: update the bar chart when the aggregate function is changed -->
-            <select name="agg" onchange="update_aggregate(this.value, 'agg')">
-                {% for agg in aggs %}
-                    <option value="{{agg}}">{{ agg }}</option>
+            <label for="facet"> Facet: </label>
+            <select name="facet" id = "facet" onchange="update_facet(this.value, 'facet')">
+                {% for facet in facets %}
+                    <option value="{{facet}}">{{ facet }}</option>
                 {% endfor %}
             </select>
         </div>
@@ -44,14 +42,38 @@
         <div id="scatter_notplaced"></div>
     </div>
 
-    <div style="display: inline-block; vertical-align: top; margin-left: 10px;">
+    <div style="display: inline-block; vertical-align: top; margin-left: 50px;">
       
-      <h3>Internships</h3><div id="internships-slider" style="width:300pt; display: inline-block"></div>
-      <h3>Projects</h3><div id="projects-slider" style="width:300pt; display: inline-block"></div>
-      <h3>Aptitude Test Score</h3><div id="aptitude-slider" style="width:300pt; display: inline-block"></div>
-      <h3>Soft Skills Rating</h3><div id="soft-slider" style="width:300pt; display: inline-block"></div>
-      <h3>SSC_Marks</h3><div id="ssc-marks-slider" style="width:300pt; display: inline-block"></div>
-      <h3>HSC_Marks</h3><div id="hsc-marks-slider" style="width:300pt; display: inline-block"></div>
+      
+      <h3>Internships</h3>
+      <span style="margin-right: 15px">{{ 0 }}</span>
+      <div id="internships-slider" style="width:300pt; display: inline-block"></div>
+      <span style="margin-left: 15px">{{ 2 }}</span>
+
+      <h3>Projects</h3>
+      <span style="margin-right: 15px">{{ 0 }}</span>
+      <div id="projects-slider" style="width:300pt; display: inline-block"></div>
+      <span style="margin-left: 15px">{{ 3 }}</span>
+
+      <h3>Aptitude Test Score</h3>
+      <span style="margin-right: 15px">{{ 60 }}</span>
+      <div id="aptitude-slider" style="width:300pt; display: inline-block"></div>
+      <span style="margin-left: 15px">{{ 90 }}</span>
+
+      <h3>Soft Skills Rating</h3>
+      <span style="margin-right: 15px">{{ 3 }}</span>
+      <div id="soft-slider" style="width:300pt; display: inline-block"></div>
+      <span style="margin-left: 15px">{{ 4.8 }}</span>
+      
+      <h3>SSC_Marks</h3>
+      <span style="margin-right: 15px">{{ 55 }}</span>
+      <div id="ssc-marks-slider" style="width:300pt; display: inline-block"></div>
+      <span style="margin-left: 15px">{{ 90 }}</span>
+
+      <h3>HSC_Marks</h3>
+      <span style="margin-right: 15px">{{ 57 }}</span>
+      <div id="hsc-marks-slider" style="width:300pt; display: inline-block"></div>
+      <span style="margin-left: 15px">{{ 88 }}</span>
     
       <div id="barchart">
       <div id="barChartButton">
@@ -63,10 +85,16 @@
             name="extrabutton"
             value="True"
             checked
+            onchange="update(scatter_notplaced_svg, scatter_notplaced_svg, scatter_placed_scale, scatter_notplaced_scale)"
           />
           <label for="extratrue">True</label>
           
-          <input type="radio" id="extrafalse" name="extrabutton" value="False" />
+          <input 
+            type="radio" 
+            id="extrafalse" 
+            name="extrabutton" 
+            value="False" 
+            onchange="update(scatter_notplaced_svg, scatter_notplaced_svg, scatter_placed_scale, scatter_notplaced_scale)"/>
           <label for="extrafalse">False</label>
         </p>
       </div>
@@ -79,15 +107,21 @@
           <h3>Placement Training</h3>
           <input
             type="radio"
-            id="extratrue"
+            id="placetrue"
             name="placementbutton"
             value="True"
             checked
+            onchange="update(scatter_notplaced_svg, scatter_notplaced_svg, scatter_placed_scale, scatter_notplaced_scale)"
           />
           <label for="extratrue">True</label>
           
-          <input type="radio" id="extrafalse" name="placementbutton" value="False" />
-          <label for="extrafalse">False</label>
+          <input 
+            type="radio" 
+            id="placefalse" 
+            name="placementbutton" 
+            value="False" 
+            onchange="update(scatter_notplaced_svg, scatter_notplaced_svg, scatter_placed_scale, scatter_notplaced_scale)"/>
+          <label for="placefalse">False</label>
         </p>
       </div>
       <div id="barchart_legend"></div>
@@ -100,7 +134,7 @@
 </body>
 
 <script>
-  margin = {top: 45, right: 30, bottom: 30, left: 45},
+  margin = {top: 45, right: 30, bottom: 50, left: 60},
   // width = 460 - margin.left - margin.right,
   // height = 360 - margin.top - margin.bottom;
   width = 400 - margin.left - margin.right,
