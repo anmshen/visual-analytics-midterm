@@ -4,11 +4,14 @@ from flask import Flask, render_template, request
 app = Flask(__name__)
 continuous_columns = ['Internships', 'Projects', 'AptitudeTestScore', 'SoftSkillsRating', 'SSC_Marks', 'HSC_Marks']
 discrete_columns = ['ExtracurricularActivities, PlacementTraining']
+x_axis = 'AptitudeTestScore'
+y_axis = 'CGPA'
+valid_axes = ['CGPA', 'AptitudeTestScore', 'SoftSkillsRating', 'SSC_Marks', 'HSC_Marks']
 
 @app.route('/')
 def index():
     # get x and y axis min/max values 
-    scatter_ranges_query = f'SELECT MIN(AptitudeTestScore), MAX(AptitudeTestScore), MIN(CGPA), MAX(CGPA) FROM placementdata.csv' # Retrieves the minimum and maximum X and Y coordinates
+    scatter_ranges_query = f'SELECT MIN({x_axis}), MAX({x_axis}), MIN({y_axis}), MAX({y_axis}) FROM placementdata.csv' # Retrieves the minimum and maximum X and Y coordinates
     scatter_ranges_results = duckdb.sql(scatter_ranges_query).df() 
     scatter_ranges = scatter_ranges_results.iloc[0].to_list()
 
@@ -43,70 +46,59 @@ def index():
         'index.html',
         filter_ranges=filter_ranges, 
         scatter_ranges=scatter_ranges,
-        x_vals=['FIX THIS LATER', "x val 2"],
-        y_vals=['FIX THIS LATER', "FIX 2"],
-        facets = ['FIX THIS LATER', 'facet 2']
+        x_vals=valid_axes,
+        y_vals=valid_axes
     )
-
-
-# TODO: Complete the update_aggregate
-@app.route("/update_facet", methods=["POST"])
-def update_facet():
-    data = request.get_json()
-    print(data)
-
-    # app.grouper = data.get("grouper", app.grouper)
-    # app.value = data.get("value", app.value)
-    # app.agg = data.get("agg", app.agg)
-
-    # # Reset to all 3b
-    # app.filters = {}
-
-    # aggregated_data = get_aggregated_data()
-
-    # result = [{"x": str(key), "y": float(value)}
-    #           for key, value in aggregated_data.items()]
-
-    # return {'data': result, 'x_column': app.grouper}
-
-    # idea: if x and y change, then we need to just update what we pass as the data for x and y/column to javascript
-    return {'data': [], 'x_column': ""}
 
 @app.route('/update', methods=["POST"])
 def update():
     request_data = request.get_json()
     print(request_data)
+    x_axis = request_data.get('x_axis', 'AptitudeTestScore')
+    y_axis = request_data.get('y_axis', 'CGPA')
+
+    ranges_query = f'SELECT MIN({x_axis}), MAX({x_axis}), MIN({y_axis}), MAX({y_axis}) FROM placementdata.csv'
+    ranges_results = duckdb.sql(ranges_query).df() 
+    axes_ranges = ranges_results.iloc[0].to_list()
     
     # parameterized query for sliders
     continuous_predicate = ' AND '.join([f'({column} >= {request_data[column][0]} AND {column} <= {request_data[column][1]})' for column in continuous_columns])
+
+    extra_vals = ["'Yes'" if v == "True" else "'No'" for v in request_data["Extracurricular_Activities"]]
+    place_vals = ["'Yes'" if v == "True" else "'No'" for v in request_data["Placement_Training"]]
+
+    if (not place_vals) or (not extra_vals):
+        combined_predicate = continuous_predicate
+        print("here")
+        return {
+            'scatter_placed_data': [],
+            'scatter_notplaced_data': [],
+            'x_range': axes_ranges[:2],
+            'y_range': axes_ranges[2:]
+        }
     
-    # paramaterized query for buttons
-    extraval = "Yes"
-    if request_data["Extracurricular_Activities"] == False:
-        extraval = "No"
-
-    placeval = "Yes"
-    if request_data["Placement_Training"] == False:
-        placeval = "No"
-        
-    discrete_predicate = f"(ExtracurricularActivities == '{extraval}') AND (PlacementTraining == '{placeval}')"
-
+    extra_in = ", ".join(extra_vals)
+    place_in = ", ".join(place_vals)
+    discrete_predicate = f"(ExtracurricularActivities IN ({extra_in})) AND (PlacementTraining IN ({place_in}))"
     combined_predicate = ' AND '.join([continuous_predicate, discrete_predicate])
     
     placed_predicate = ' AND '.join([combined_predicate, "PlacementStatus == 'Placed'"])
     notplaced_predicate = ' AND '.join([combined_predicate, "PlacementStatus == 'NotPlaced'"])
 
     # placed data
-    scatter_placed_query = f'SELECT AptitudeTestScore, CGPA FROM placementdata.csv WHERE {placed_predicate}'
+    scatter_placed_query = f'SELECT {x_axis}, {y_axis} FROM placementdata.csv WHERE {placed_predicate}'
     scatter_placed_results = duckdb.sql(scatter_placed_query).df()
     scatter_placed_data = scatter_placed_results.to_dict(orient='records') 
     
     # not placed data
-    scatter_notplaced_query = f'SELECT AptitudeTestScore, CGPA FROM placementdata.csv WHERE {notplaced_predicate}'
+    scatter_notplaced_query = f'SELECT {x_axis}, {y_axis} FROM placementdata.csv WHERE {notplaced_predicate}'
     scatter_notplaced_results = duckdb.sql(scatter_notplaced_query).df()
     scatter_notplaced_data = scatter_notplaced_results.to_dict(orient='records') 
     
-    return {'scatter_placed_data': scatter_placed_data, 'scatter_notplaced_data': scatter_notplaced_data}
+    return {'scatter_placed_data': scatter_placed_data, 
+            'scatter_notplaced_data': scatter_notplaced_data, 
+            'x_range': axes_ranges[:2], 
+            "y_range": axes_ranges[2:]}
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -12,21 +12,15 @@
 <div id="interactions-container">
         <div id="dropdown-container">
             <label for="x_val"> X: </label>
-            <select name="x_val" id="xdropdown" onchange="update_facet(this.value, 'x_val')">
+            <select name="x_val" id="xdropdown" onchange="update(scatter_placed_svg, scatter_notplaced_svg, scatter_placed_scale, scatter_notplaced_scale)">
                 {% for group in x_vals %}
                     <option value="{{group}}">{{ group }}</option>
                 {% endfor %}
             </select>
             <label for="y_val"> Y: </label>
-            <select name="y_val" id = "ydropdown" onchange="update_facet(this.value, 'y_val')">
+            <select name="y_val" id = "ydropdown" onchange="update(scatter_placed_svg, scatter_notplaced_svg, scatter_placed_scale, scatter_notplaced_scale)">
                 {% for value in y_vals %}
                     <option value="{{value}}">{{ value }}</option>
-                {% endfor %}
-            </select>
-            <label for="facet"> Facet: </label>
-            <select name="facet" id = "facet" onchange="update_facet(this.value, 'facet')">
-                {% for facet in facets %}
-                    <option value="{{facet}}">{{ facet }}</option>
                 {% endfor %}
             </select>
         </div>
@@ -46,55 +40,55 @@
       
       
       <h3>Internships</h3>
-      <span style="margin-right: 15px">{{ 0 }}</span>
+      <span style="margin-right: 20px">{{ 0 }}</span>
       <div id="internships-slider" style="width:300pt; display: inline-block"></div>
-      <span style="margin-left: 15px">{{ 2 }}</span>
+      <span style="margin-left: 20px">{{ 2 }}</span>
 
       <h3>Projects</h3>
-      <span style="margin-right: 15px">{{ 0 }}</span>
+      <span style="margin-right: 20px">{{ 0 }}</span>
       <div id="projects-slider" style="width:300pt; display: inline-block"></div>
-      <span style="margin-left: 15px">{{ 3 }}</span>
+      <span style="margin-left: 20px">{{ 3 }}</span>
 
       <h3>Aptitude Test Score</h3>
-      <span style="margin-right: 15px">{{ 60 }}</span>
+      <span style="margin-right: 20px">{{ 60 }}</span>
       <div id="aptitude-slider" style="width:300pt; display: inline-block"></div>
-      <span style="margin-left: 15px">{{ 90 }}</span>
+      <span style="margin-left: 20px">{{ 90 }}</span>
 
       <h3>Soft Skills Rating</h3>
-      <span style="margin-right: 15px">{{ 3 }}</span>
+      <span style="margin-right: 20px">{{ 3 }}</span>
       <div id="soft-slider" style="width:300pt; display: inline-block"></div>
-      <span style="margin-left: 15px">{{ 4.8 }}</span>
+      <span style="margin-left: 20px">{{ 4.8 }}</span>
       
       <h3>SSC_Marks</h3>
-      <span style="margin-right: 15px">{{ 55 }}</span>
+      <span style="margin-right: 20px">{{ 55 }}</span>
       <div id="ssc-marks-slider" style="width:300pt; display: inline-block"></div>
-      <span style="margin-left: 15px">{{ 90 }}</span>
+      <span style="margin-left: 20px">{{ 90 }}</span>
 
       <h3>HSC_Marks</h3>
-      <span style="margin-right: 15px">{{ 57 }}</span>
+      <span style="margin-right: 20px">{{ 57 }}</span>
       <div id="hsc-marks-slider" style="width:300pt; display: inline-block"></div>
-      <span style="margin-left: 15px">{{ 88 }}</span>
+      <span style="margin-left: 20px">{{ 88 }}</span>
     
       <div id="barchart">
       <div id="barChartButton">
         <p>
           <h3>Extracurricular Activities</h3>
           <input
-            type="radio"
+            type="checkbox"
             id="extratrue"
             name="extrabutton"
             value="True"
             checked
-            onchange="update(scatter_notplaced_svg, scatter_notplaced_svg, scatter_placed_scale, scatter_notplaced_scale)"
+            onchange="update(scatter_placed_svg, scatter_notplaced_svg, scatter_placed_scale, scatter_notplaced_scale)"
           />
           <label for="extratrue">True</label>
           
           <input 
-            type="radio" 
+            type="checkbox" 
             id="extrafalse" 
-            name="extrabutton" 
-            value="False" 
-            onchange="update(scatter_notplaced_svg, scatter_notplaced_svg, scatter_placed_scale, scatter_notplaced_scale)"/>
+            name="extrabutton"
+            value="False"
+            onchange="update(scatter_placed_svg, scatter_notplaced_svg, scatter_placed_scale, scatter_notplaced_scale)"/>
           <label for="extrafalse">False</label>
         </p>
       </div>
@@ -106,21 +100,21 @@
         <p>
           <h3>Placement Training</h3>
           <input
-            type="radio"
+            type="checkbox"
             id="placetrue"
-            name="placementbutton"
+            name="placebutton"
             value="True"
             checked
-            onchange="update(scatter_notplaced_svg, scatter_notplaced_svg, scatter_placed_scale, scatter_notplaced_scale)"
+            onchange="update(scatter_placed_svg, scatter_notplaced_svg, scatter_placed_scale, scatter_notplaced_scale)"
           />
-          <label for="extratrue">True</label>
+          <label for="placetrue">True</label>
           
           <input 
-            type="radio" 
+            type="checkbox" 
             id="placefalse" 
-            name="placementbutton" 
-            value="False" 
-            onchange="update(scatter_notplaced_svg, scatter_notplaced_svg, scatter_placed_scale, scatter_notplaced_scale)"/>
+            name="placebutton"
+            value="False"
+            onchange="update(scatter_placed_svg, scatter_notplaced_svg, scatter_placed_scale, scatter_notplaced_scale)"/>
           <label for="placefalse">False</label>
         </p>
       </div>

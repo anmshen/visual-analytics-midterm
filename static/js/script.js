@@ -89,26 +89,64 @@ function draw_slider(column, min, max, scatter_svg, bar_svg, scatter_scale, bar_
     });
 }
 
+function calculate_regression(data, x_name, y_name, x_scale, y_scale) {
+    const n = data.length;
+    if (n < 2) return null;
+
+    const sumX = d3.sum(data, d => d[x_name]);
+    const sumY = d3.sum(data, d => d[y_name]);
+    const sumXY = d3.sum(data, d => d[x_name] * d[y_name]);
+    const sumX2 = d3.sum(data, d => d[x_name] * d[x_name]);
+
+    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+    const intercept = (sumY - slope * sumX) / n;
+
+    const xCoords = data.map(d => d[x_name]);
+    const minX = d3.min(xCoords);
+    const maxX = d3.max(xCoords);
+
+    return {
+        x1: x_scale(minX),
+        y1: y_scale(slope * minX + intercept),
+        x2: x_scale(maxX),
+        y2: y_scale(slope * maxX + intercept)
+    };
+}
+
 // TODO: Write a function that draws the scatter plot
 
 
-function draw_scatter(data, svg, scale) {
+function draw_scatter(data, svg, scale, x_name=currentX, y_name=currentY) {
     svg.selectAll(".dot")
         .data(data)
         .join(
             enter => enter.append("circle")
                 .attr("class", "dot")
                 .attr("r", 4)
-                .attr("cx", d => scale.x(d.AptitudeTestScore))
-                .attr("cy", d => scale.y(d.CGPA))
+                .attr("cx", d => scale.x(d[x_name]))
+                .attr("cy", d => scale.y(d[y_name]))
                 .attr('opacity', 0.7)
                 .style("fill", "#3c7ab0")
                 .style("stroke", "none"),
             update => update
-                .attr("cx", d => scale.x(d.AptitudeTestScore))
-                .attr("cy", d => scale.y(d.CGPA)),
+                .attr("cx", d => scale.x(d[x_name]))
+                .attr("cy", d => scale.y(d[y_name])),
             exit => exit.remove()
         );
+    
+    const lineCoords = calculate_regression(data, x_name, y_name, scale.x, scale.y);
+    svg.selectAll(".trendline").remove();
+
+    if (lineCoords) {
+        svg.append("line")
+            .attr("class", "trendline")
+            .attr("x1", lineCoords.x1)
+            .attr("y1", lineCoords.y1)
+            .attr("x2", lineCoords.x2)
+            .attr("y2", lineCoords.y2)
+            .style("stroke", "#c03308") 
+            .style("stroke-width", 3)
+    }
 }
 
 // TODO: Write a function that extracts the selected days and minimum/maximum values for each slider
@@ -120,41 +158,27 @@ function get_params(){
         'SoftSkillsRating': document.getElementById('soft-slider').noUiSlider.get().map(Number),
         'SSC_Marks': document.getElementById('ssc-marks-slider').noUiSlider.get().map(Number),
         'HSC_Marks': document.getElementById('hsc-marks-slider').noUiSlider.get().map(Number),
-        'Extracurricular_Activities': document.querySelector('input[name="extrabutton"]:checked').value,
-        'Placement_Training': document.querySelector('input[name="placementbutton"]:checked').value
+        'Extracurricular_Activities': [...document.querySelectorAll('input[name="extrabutton"]:checked')].map(x => x.value),
+        'Placement_Training': [...document.querySelectorAll('input[name="placebutton"]:checked')].map(x => x.value),
+        'x_axis': document.getElementById("xdropdown").value,
+        'y_axis': document.getElementById("ydropdown").value
     }
-}
-
-function update_facet(value, type){    
-    const x_val = document.getElementById("xdropdown").value;
-    const y_val = document.getElementById("ydropdown").value;
-    const facet = document.getElementById("facet").value;
-    // document.getElementById("Country/Region-filter").value = "All";
-    // document.getElementById("Region-filter").value = "All";
-    // document.getElementById("State/Province-filter").value = "All";
-
-    fetch('/update_facet', {
-        method: 'POST',
-        credentials: 'include',
-        body: JSON.stringify({"x_val": x_val, "y_val": y_val, "facet": facet}),
-        cache: 'no-cache',
-        headers: new Headers({
-            'content-type': 'application/json'
-        })
-    }).then(async function(response){
-        var results = JSON.parse(JSON.stringify((await response.json())))
-        // TODO: DRAW THE SCATTER PLOT
-    })
 }
 
 // TODO: Write a function that removes the old data points and redraws the scatterplot
 function update_scatter(data, svg, scale){
+    // svg.selectAll(".x-axis")
+    // draw_axes(plot_name, svg, width, height, domainx, domainy, x_discrete)
     svg.selectAll(".dot").remove();
     draw_scatter(data, svg, scale)
+
 }
 
-function update(scatter_svg, bar_svg, scatter_scale, bar_scale){
+function update(scatter_placed_svg, scatter_notplaced_svg, scatter_placed_scale, scatter_notplaced_scale){
     params = get_params()
+    currentX = params.x_axis
+    currentY = params.y_axis
+    // retrieve the x and y axis
     fetch('/update', {
         method: 'POST',
         credentials: 'include',
@@ -164,7 +188,21 @@ function update(scatter_svg, bar_svg, scatter_scale, bar_scale){
             'content-type': 'application/json'
         })
     }).then(async function(response){
-        var results = JSON.parse(JSON.stringify((await response.json())))
+        var results = JSON.parse(JSON.stringify((await response.json()))) 
+
+        scatter_placed_svg.selectAll(".scatter_placed-xaxis").remove()
+        scatter_placed_svg.selectAll(".scatter_placed-yaxis").remove()
+        scatter_placed_svg.selectAll(".y-label").remove()
+        scatter_placed_svg.selectAll(".x-label").remove()
+        
+        scatter_notplaced_svg.selectAll(".scatter_notplaced-xaxis").remove()
+        scatter_notplaced_svg.selectAll(".scatter_notplaced-yaxis").remove()
+        scatter_notplaced_svg.selectAll(".x-label").remove()
+        scatter_notplaced_svg.selectAll(".y-label").remove()
+
+        scatter_placed_scale = draw_axes('scatter_placed', scatter_placed_svg, width, height, results.x_range, results.y_range, false)
+        scatter_notplaced_scale = draw_axes('scatter_notplaced', scatter_notplaced_svg, width, height, results.x_range, results.y_range, false)
+
         update_scatter(results['scatter_placed_data'], scatter_placed_svg, scatter_placed_scale)
         update_scatter(results['scatter_notplaced_data'], scatter_notplaced_svg, scatter_notplaced_scale)
     })
