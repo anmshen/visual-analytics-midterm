@@ -1,4 +1,5 @@
 import duckdb
+import numpy as np
 from flask import Flask, render_template, request
 
 app = Flask(__name__)
@@ -8,6 +9,25 @@ x_axis = 'AptitudeTestScore'
 y_axis = 'CGPA'
 valid_axes = ['CGPA', 'AptitudeTestScore', 'SoftSkillsRating', 'SSC_Marks', 'HSC_Marks']
 
+def get_regression_coords(df, x_col, y_col):
+    if df.empty or len(df) < 2:
+        return None
+    
+    x = df[x_col].values
+    y = df[y_col].values
+    
+    m, b = np.polyfit(x, y, 1)
+    
+    min_x = float(x.min())
+    max_x = float(x.max())
+    
+    return {
+        "x1": min_x,
+        "y1": m * min_x + b,
+        "x2": max_x,
+        "y2": m * max_x + b
+    }
+    
 @app.route('/')
 def index():
     # get x and y axis min/max values 
@@ -98,7 +118,9 @@ def update():
     return {'scatter_placed_data': scatter_placed_data, 
             'scatter_notplaced_data': scatter_notplaced_data, 
             'x_range': axes_ranges[:2], 
-            "y_range": axes_ranges[2:]}
+            "y_range": axes_ranges[2:],
+            'placed_trendline': get_regression_coords(scatter_placed_results, x_axis, y_axis),
+            'notplaced_trendline': get_regression_coords(scatter_notplaced_results, x_axis, y_axis)}
 
 if __name__ == "__main__":
     app.run(debug=True)

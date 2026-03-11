@@ -89,34 +89,7 @@ function draw_slider(column, min, max, scatter_svg, bar_svg, scatter_scale, bar_
     });
 }
 
-function calculate_regression(data, x_name, y_name, x_scale, y_scale) {
-    const n = data.length;
-    if (n < 2) return null;
-
-    const sumX = d3.sum(data, d => d[x_name]);
-    const sumY = d3.sum(data, d => d[y_name]);
-    const sumXY = d3.sum(data, d => d[x_name] * d[y_name]);
-    const sumX2 = d3.sum(data, d => d[x_name] * d[x_name]);
-
-    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-    const intercept = (sumY - slope * sumX) / n;
-
-    const xCoords = data.map(d => d[x_name]);
-    const minX = d3.min(xCoords);
-    const maxX = d3.max(xCoords);
-
-    return {
-        x1: x_scale(minX),
-        y1: y_scale(slope * minX + intercept),
-        x2: x_scale(maxX),
-        y2: y_scale(slope * maxX + intercept)
-    };
-}
-
-// TODO: Write a function that draws the scatter plot
-
-
-function draw_scatter(data, svg, scale, x_name=currentX, y_name=currentY) {
+function draw_scatter(data, svg, scale, trendlineData, x_name=currentX, y_name=currentY) {
     svg.selectAll(".dot")
         .data(data)
         .join(
@@ -134,19 +107,17 @@ function draw_scatter(data, svg, scale, x_name=currentX, y_name=currentY) {
             exit => exit.remove()
         );
     
-    const lineCoords = calculate_regression(data, x_name, y_name, scale.x, scale.y);
     svg.selectAll(".trendline").remove();
-
-    if (lineCoords) {
-        svg.append("line")
-            .attr("class", "trendline")
-            .attr("x1", lineCoords.x1)
-            .attr("y1", lineCoords.y1)
-            .attr("x2", lineCoords.x2)
-            .attr("y2", lineCoords.y2)
-            .style("stroke", "#c03308") 
-            .style("stroke-width", 3)
-    }
+        if (trendlineData) {
+            svg.append("line")
+                .attr("class", "trendline")
+                .attr("x1", scale.x(trendlineData.x1))
+                .attr("y1", scale.y(trendlineData.y1))
+                .attr("x2", scale.x(trendlineData.x2))
+                .attr("y2", scale.y(trendlineData.y2))
+                .style("stroke", "#c03308")
+                .style("stroke-width", 3);
+        }
 }
 
 // TODO: Write a function that extracts the selected days and minimum/maximum values for each slider
@@ -166,11 +137,11 @@ function get_params(){
 }
 
 // TODO: Write a function that removes the old data points and redraws the scatterplot
-function update_scatter(data, svg, scale){
+function update_scatter(data, svg, scale, trendlineData){
     // svg.selectAll(".x-axis")
     // draw_axes(plot_name, svg, width, height, domainx, domainy, x_discrete)
     svg.selectAll(".dot").remove();
-    draw_scatter(data, svg, scale)
+    draw_scatter(data, svg, scale, trendlineData)
 
 }
 
@@ -203,7 +174,7 @@ function update(scatter_placed_svg, scatter_notplaced_svg, scatter_placed_scale,
         scatter_placed_scale = draw_axes('scatter_placed', scatter_placed_svg, width, height, results.x_range, results.y_range, false)
         scatter_notplaced_scale = draw_axes('scatter_notplaced', scatter_notplaced_svg, width, height, results.x_range, results.y_range, false)
 
-        update_scatter(results['scatter_placed_data'], scatter_placed_svg, scatter_placed_scale)
-        update_scatter(results['scatter_notplaced_data'], scatter_notplaced_svg, scatter_notplaced_scale)
+        update_scatter(results['scatter_placed_data'], scatter_placed_svg, scatter_placed_scale, results['placed_trendline'])
+        update_scatter(results['scatter_notplaced_data'], scatter_notplaced_svg, scatter_notplaced_scale, results['notplaced_trendline'])
     })
 }
